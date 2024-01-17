@@ -81,6 +81,7 @@ typedef struct __attribute__((__packed__)) {
 } activity_item_t;
 
 #define MAX_ACTIVITY_SECONDS 28800 // 8 hours = 28800 sec
+#define BEEP_INTERVAL 60
 
 // Size of (fixed) buffer to log activites. Takes up x9 bytes in SRAM if face is installed.
 #define ACTIVITY_LOG_SZ 99
@@ -101,6 +102,7 @@ typedef enum {
     ACTM_LOGGING,
     ACTM_PAUSED,
     ACTM_DONE,
+    ACTM_BEEP,
     ACTM_LOGSIZE,
     ACTM_CHIRP,
     ACTM_CHIRPING,
@@ -142,6 +144,8 @@ typedef struct {
     // 1: In LE mode
     // 2: Just woke up from LE mode. Will go to 0 after ignoring ALARM_BUTTON_UP.
     uint8_t le_state;
+    // wether to beep, pomodoro-style, every XX seconds
+    bool beep;
 
 } activity_state_t;
 
@@ -171,6 +175,8 @@ void activity_face_setup(movement_settings_t *settings, uint8_t watch_face_index
         *context_ptr = malloc(sizeof(activity_state_t));
         memset(*context_ptr, 0, sizeof(activity_state_t));
         // This happens only at boot
+        activity_state_t* state = (activity_state_t*)*context_ptr;
+        state->beep = true;
         _activity_clear_buffers();
     }
     // Do any pin or peripheral setup here; this will be called whenever the watch wakes from deep sleep.
@@ -442,11 +448,28 @@ static void _activity_finish_logging(activity_state_t *state) {
     watch_display_string("AC   dONE ", 0);
 }
 
+static void _activity_display_beep_choice(bool beep){
+    if (beep) {
+        watch_display_string("AC  BEEP y", 0);
+    } else {
+        watch_display_string("AC  BEEP n", 0);
+    }
+}
+
 static void _activity_handle_tick(movement_settings_t *settings, activity_state_t *state) {
     // Display stopwatch-like duration while logging, alternating with time
     if (state->mode == ACTM_LOGGING || state->mode == ACTM_PAUSED) {
         ++state->counter;
         ++state->curr_total_sec;
+        // +1 to skip beep on start when counter is 0
+        uint16_t counter = state->counter + 1;
+        if(state->beep && !(counter % BEEP_INTERVAL)){
+            if (!((counter/2) % BEEP_INTERVAL)) {
+                watch_buzzer_play_note(BUZZER_NOTE_F3SHARP_G3FLAT, 400);
+            } else {
+                watch_buzzer_play_note(BUZZER_NOTE_F2SHARP_G2FLAT, 400);
+            }
+        }
         if (state->mode == ACTM_PAUSED)
             ++state->curr_pause_sec;
         // If we've reached max activity length: finish logging
@@ -544,6 +567,10 @@ static void _activity_alarm_long(movement_settings_t *settings, activity_state_t
         _activity_update_logging_screen(settings, state);
     }
     // If logging or paused: end logging
+    else if (state->mode == ACTM_BEEP){
+        state->beep = !state->beep;
+        _activity_display_beep_choice(state->beep);
+    }
     else if (state->mode == ACTM_LOGGING || state->mode == ACTM_PAUSED) {
         _activity_finish_logging(state);
     }
@@ -609,8 +636,14 @@ static void _activity_alarm_short(movement_settings_t *settings, activity_state_
 }
 
 static void _activity_light_short(activity_state_t *state) {
-    // If choose face: move to log size
+    // If choose face: move to beep chooser
     if (state->mode == ACTM_CHOOSE) {
+        state->mode = ACTM_BEEP;
+        state->counter = 0;
+        _activity_display_beep_choice(state->beep);
+    }
+    // If beep face: move to log size
+    else if (state->mode == ACTM_BEEP) {
         state->mode = ACTM_LOGSIZE;
         state->counter = 0;
         sprintf(activity_buf, "AC  L#g%3d", activity_log_count);
