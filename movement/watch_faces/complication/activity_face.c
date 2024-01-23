@@ -27,12 +27,12 @@
  * -- Additional power-saving optimizations
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include "activity_face.h"
 #include "chirpy_tx.h"
 #include "watch.h"
 #include "watch_utility.h"
+#include <stdlib.h>
+#include <string.h>
 
 // ===========================================================================
 // This part is configurable: you can edit values here to customize you activity face
@@ -56,7 +56,7 @@ static const char activity_names[][7] = {
 };
 
 // Currently enabled activities. This makes picking on first subface easier: why show activities you personally never do.
-static const uint8_t enabled_activities[] = {0,1,2,3,4, 5};
+static const uint8_t enabled_activities[] = {0, 1, 2, 3, 4, 5};
 
 // Number of currently enabled activities (size of enabled_activities).
 static const uint8_t num_enabled_activities = sizeof(enabled_activities) / sizeof(uint8_t);
@@ -228,12 +228,12 @@ static void _activity_display_choice(activity_state_t *state) {
 }
 
 const uint8_t activity_anim_pixels[][2] = {
-    {1, 4},  // TL
-    {0, 5},  // BL
-    {0, 6},  // BOT
-    {1, 6},  // BR
-    {2, 5},  // TR
-    {2, 4},  // TOP
+    {1, 4}, // TL
+    {0, 5}, // BL
+    {0, 6}, // BOT
+    {1, 6}, // BR
+    {2, 5}, // TR
+    {2, 4}, // TOP
     // {2, 4}, // MID
 };
 
@@ -301,9 +301,9 @@ static void _activity_update_logging_screen(movement_settings_t *settings, activ
             else
                 watch_set_indicator(WATCH_INDICATOR_PM);
             hour %= 12;
-            if (hour == 0) hour = 12;
-        }
-        else {
+            if (hour == 0)
+                hour = 12;
+        } else {
             watch_set_indicator(WATCH_INDICATOR_24H);
             watch_clear_indicator(WATCH_INDICATOR_PM);
         }
@@ -342,7 +342,7 @@ static void _activity_chirp_tick_countdown(void *context) {
     // Countdown over: start actual broadcast
     if (state->chirpy_tick_state.seq_pos == 8 * 3) {
         state->chirpy_tick_state.tick_compare = 3;
-        state->chirpy_tick_state.tick_count = 2;  // tick_compare - 1, so it starts immediately
+        state->chirpy_tick_state.tick_count = 2; // tick_compare - 1, so it starts immediately
         state->chirpy_tick_state.seq_pos = 0;
         state->chirpy_tick_state.tick_fun = _activity_chirp_tick_transmit;
         return;
@@ -515,8 +515,10 @@ static void _activity_handle_tick(movement_settings_t *settings, activity_state_
         // Leave Clear after only 10: this is danger zone, we don't like hanging around here
         // Leave Chirp after 2 minutes: most likely need to the time to fiddle with mic & Chirpy RX on the computer
         uint16_t timeout = 20;
-        if (state->mode == ACTM_CLEAR) timeout = 10;
-        else if (state->mode == ACTM_CHIRP) timeout = 120;
+        if (state->mode == ACTM_CLEAR)
+            timeout = 10;
+        else if (state->mode == ACTM_CHIRP)
+            timeout = 120;
         if (state->counter > timeout) {
             state->mode = ACTM_CHOOSE;
             _activity_display_choice(state);
@@ -556,7 +558,8 @@ static void _activity_handle_tick(movement_settings_t *settings, activity_state_
         // Display current state of animation
         sprintf(activity_buf, "      ");
         uint8_t nZeros = state->counter + 1;
-        if (nZeros > 6) nZeros = 6;
+        if (nZeros > 6)
+            nZeros = 6;
         for (uint8_t i = 0; i < nZeros; ++i) {
             activity_buf[i] = '0';
         }
@@ -584,7 +587,7 @@ static void _activity_alarm_long(movement_settings_t *settings, activity_state_t
         if (state->beep_spacing++ >= 6) {
             state->beep_spacing = 0;
         }
-        _activity_display_beep_choice(state->beep_spacing*BEEP_INTERVAL_MULTIPLIER);
+        _activity_display_beep_choice(state->beep_spacing * BEEP_INTERVAL_MULTIPLIER);
     } else if (state->mode == ACTM_LOGGING || state->mode == ACTM_PAUSED) {
         _activity_finish_logging(state);
     }
@@ -593,7 +596,7 @@ static void _activity_alarm_long(movement_settings_t *settings, activity_state_t
         // Set up our tick handling for countdown beeps
         activity_seq_pos = &state->chirpy_tick_state.seq_pos;
         state->chirpy_tick_state.tick_compare = 8;
-        state->chirpy_tick_state.tick_count = 7;  // tick_compare - 1, so it starts immediately
+        state->chirpy_tick_state.tick_count = 7; // tick_compare - 1, so it starts immediately
         state->chirpy_tick_state.seq_pos = 0;
         state->chirpy_tick_state.tick_fun = _activity_chirp_tick_countdown;
         // Set up chirpy encoder
@@ -654,7 +657,7 @@ static void _activity_light_short(activity_state_t *state) {
     if (state->mode == ACTM_CHOOSE) {
         state->mode = ACTM_BEEP;
         state->counter = 0;
-        _activity_display_beep_choice(state->beep_spacing*BEEP_INTERVAL_MULTIPLIER);
+        _activity_display_beep_choice(state->beep_spacing * BEEP_INTERVAL_MULTIPLIER);
     }
     // If beep face: move to log size
     else if (state->mode == ACTM_BEEP) {
@@ -692,58 +695,57 @@ bool activity_face_loop(movement_event_t event, movement_settings_t *settings, v
     activity_state_t *state = (activity_state_t *)context;
 
     switch (event.event_type) {
-        case EVENT_ACTIVATE:
-            _activity_activate(settings, state);
-            break;
-        case EVENT_TICK:
-            _activity_handle_tick(settings, state);
-            break;
-        case EVENT_MODE_BUTTON_UP:
-            if (state->mode != ACTM_LOGGING && state->mode != ACTM_PAUSED && state->mode != ACTM_CHIRPING) {
-                movement_request_tick_frequency(1);
-                movement_move_to_next_face();
-            }
-            break;
-        case EVENT_LIGHT_BUTTON_UP:
-            _activity_light_short(state);
-            break;
-        case EVENT_ALARM_BUTTON_UP:
-            // We also receive ALARM press that woke us up from LE state
-            // Don't want to act on that as if it were a real button press for us
-            if (state->le_state != 2)
-                _activity_alarm_short(settings, state);
-            else
-                state->le_state = 0;
-            break;
-        case EVENT_ALARM_LONG_PRESS:
-            _activity_alarm_long(settings, state);
-            break;
-        case EVENT_TIMEOUT:
-            if (state->mode != ACTM_LOGGING && state->mode != ACTM_PAUSED &&
-                state->mode != ACTM_CHIRP && state->mode != ACTM_CHIRPING) {
-                movement_request_tick_frequency(1);
-                movement_move_to_face(0);
-            }
-            break;
-        case EVENT_LOW_ENERGY_UPDATE:
-            state->le_state = 1;
-            // If we're in paused logging mode: let's lose this activity. Pause is not meant for over an hour.
-            if (state->mode == ACTM_PAUSED) {
-                // When waking, face will revert to default screen
-                state->mode = ACTM_CHOOSE;
-                watch_display_string("AC  SLEEP ", 0);
-                watch_clear_colon();
-                watch_clear_indicator(WATCH_INDICATOR_LAP);
-                watch_clear_indicator(WATCH_INDICATOR_PM);
-            }
-            else {
-                _activity_update_logging_screen(settings, state);
-                watch_start_tick_animation(500);
-            }
-            break;
-        default:
-            movement_default_loop_handler(event, settings);
-            break;
+    case EVENT_ACTIVATE:
+        _activity_activate(settings, state);
+        break;
+    case EVENT_TICK:
+        _activity_handle_tick(settings, state);
+        break;
+    case EVENT_MODE_BUTTON_UP:
+        if (state->mode != ACTM_LOGGING && state->mode != ACTM_PAUSED && state->mode != ACTM_CHIRPING) {
+            movement_request_tick_frequency(1);
+            movement_move_to_next_face();
+        }
+        break;
+    case EVENT_LIGHT_BUTTON_UP:
+        _activity_light_short(state);
+        break;
+    case EVENT_ALARM_BUTTON_UP:
+        // We also receive ALARM press that woke us up from LE state
+        // Don't want to act on that as if it were a real button press for us
+        if (state->le_state != 2)
+            _activity_alarm_short(settings, state);
+        else
+            state->le_state = 0;
+        break;
+    case EVENT_ALARM_LONG_PRESS:
+        _activity_alarm_long(settings, state);
+        break;
+    case EVENT_TIMEOUT:
+        if (state->mode != ACTM_LOGGING && state->mode != ACTM_PAUSED &&
+            state->mode != ACTM_CHIRP && state->mode != ACTM_CHIRPING) {
+            movement_request_tick_frequency(1);
+            movement_move_to_face(0);
+        }
+        break;
+    case EVENT_LOW_ENERGY_UPDATE:
+        state->le_state = 1;
+        // If we're in paused logging mode: let's lose this activity. Pause is not meant for over an hour.
+        if (state->mode == ACTM_PAUSED) {
+            // When waking, face will revert to default screen
+            state->mode = ACTM_CHOOSE;
+            watch_display_string("AC  SLEEP ", 0);
+            watch_clear_colon();
+            watch_clear_indicator(WATCH_INDICATOR_LAP);
+            watch_clear_indicator(WATCH_INDICATOR_PM);
+        } else {
+            _activity_update_logging_screen(settings, state);
+            watch_start_tick_animation(500);
+        }
+        break;
+    default:
+        movement_default_loop_handler(event, settings);
+        break;
     }
 
     // Return true if the watch can enter standby mode. False needed when chirping.
