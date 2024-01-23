@@ -81,7 +81,7 @@ typedef struct __attribute__((__packed__)) {
 } activity_item_t;
 
 #define MAX_ACTIVITY_SECONDS 28800 // 8 hours = 28800 sec
-#define BEEP_INTERVAL 30
+#define BEEP_INTERVAL_MULTIPLIER 15
 
 // Size of (fixed) buffer to log activites. Takes up x9 bytes in SRAM if face is installed.
 #define ACTIVITY_LOG_SZ 99
@@ -144,8 +144,8 @@ typedef struct {
     // 1: In LE mode
     // 2: Just woke up from LE mode. Will go to 0 after ignoring ALARM_BUTTON_UP.
     uint8_t le_state;
-    // wether to beep, pomodoro-style, every XX seconds
-    bool beep;
+    // beep, pomodoro-style, every 15X seconds
+    uint8_t beep_spacing;
 
 } activity_state_t;
 
@@ -175,8 +175,8 @@ void activity_face_setup(movement_settings_t *settings, uint8_t watch_face_index
         *context_ptr = malloc(sizeof(activity_state_t));
         memset(*context_ptr, 0, sizeof(activity_state_t));
         // This happens only at boot
-        activity_state_t* state = (activity_state_t*)*context_ptr;
-        state->beep = true;
+        activity_state_t *state = (activity_state_t *)*context_ptr;
+        state->beep_spacing = 2;
         _activity_clear_buffers();
     }
     // Do any pin or peripheral setup here; this will be called whenever the watch wakes from deep sleep.
@@ -459,12 +459,14 @@ static void _activity_finish_logging(activity_state_t *state) {
     watch_display_string("AC   dONE ", 0);
 }
 
-static void _activity_display_beep_choice(bool beep){
-    if (beep) {
-        watch_display_string("AC  BEEP y", 0);
+static void _activity_display_beep_choice(uint8_t value) {
+    char buf[7];
+    if (value) {
+        sprintf(buf, "BEEP%02i", value);
     } else {
-        watch_display_string("AC  BEEP n", 0);
+        sprintf(buf, "BEEPno");
     }
+    watch_display_string(buf, 4);
 }
 
 static void _activity_handle_tick(movement_settings_t *settings, activity_state_t *state) {
@@ -474,11 +476,12 @@ static void _activity_handle_tick(movement_settings_t *settings, activity_state_
         ++state->curr_total_sec;
         // +1 to skip beep on start when counter is 0
         uint16_t counter = state->counter + 1;
-        if(state->beep && !(counter % BEEP_INTERVAL)){
-            if (!((counter/2) % BEEP_INTERVAL)) {
-                watch_buzzer_play_note(BUZZER_NOTE_F3SHARP_G3FLAT, 400);
+        uint16_t period = state->beep_spacing * BEEP_INTERVAL_MULTIPLIER;
+        if (state->beep_spacing && !(counter % period)) {
+            if (!((counter / 2) % period)) {
+                watch_buzzer_play_note(BUZZER_NOTE_F3SHARP_G3FLAT, 40);
             } else {
-                watch_buzzer_play_note(BUZZER_NOTE_F2SHARP_G2FLAT, 400);
+                watch_buzzer_play_note(BUZZER_NOTE_F2SHARP_G2FLAT, 40);
             }
         }
         if (state->mode == ACTM_PAUSED)
@@ -497,8 +500,7 @@ static void _activity_handle_tick(movement_settings_t *settings, activity_state_
         if (state->counter == 0) {
             movement_move_to_face(0);
             movement_request_tick_frequency(1);
-        }
-        else {
+        } else {
             uint8_t cd = state->counter % 6;
             watch_clear_pixel(activity_anim_pixels[cd][0], activity_anim_pixels[cd][1]);
             --state->counter;
@@ -578,11 +580,12 @@ static void _activity_alarm_long(movement_settings_t *settings, activity_state_t
         _activity_update_logging_screen(settings, state);
     }
     // If logging or paused: end logging
-    else if (state->mode == ACTM_BEEP){
-        state->beep = !state->beep;
-        _activity_display_beep_choice(state->beep);
-    }
-    else if (state->mode == ACTM_LOGGING || state->mode == ACTM_PAUSED) {
+    else if (state->mode == ACTM_BEEP) {
+        if (state->beep_spacing++ >= 6) {
+            state->beep_spacing = 0;
+        }
+        _activity_display_beep_choice(state->beep_spacing*BEEP_INTERVAL_MULTIPLIER);
+    } else if (state->mode == ACTM_LOGGING || state->mode == ACTM_PAUSED) {
         _activity_finish_logging(state);
     }
     // If chirp: kick off chirping
@@ -651,7 +654,7 @@ static void _activity_light_short(activity_state_t *state) {
     if (state->mode == ACTM_CHOOSE) {
         state->mode = ACTM_BEEP;
         state->counter = 0;
-        _activity_display_beep_choice(state->beep);
+        _activity_display_beep_choice(state->beep_spacing*BEEP_INTERVAL_MULTIPLIER);
     }
     // If beep face: move to log size
     else if (state->mode == ACTM_BEEP) {
