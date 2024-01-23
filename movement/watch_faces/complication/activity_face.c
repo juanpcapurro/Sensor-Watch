@@ -81,7 +81,7 @@ typedef struct __attribute__((__packed__)) {
 } activity_item_t;
 
 #define MAX_ACTIVITY_SECONDS 28800 // 8 hours = 28800 sec
-#define BEEP_INTERVAL 60
+#define BEEP_INTERVAL 30
 
 // Size of (fixed) buffer to log activites. Takes up x9 bytes in SRAM if face is installed.
 #define ACTIVITY_LOG_SZ 99
@@ -441,6 +441,17 @@ static void _activity_finish_logging(activity_state_t *state) {
     // Go to DONE animation
     // TODO: Not in LE mode
     state->mode = ACTM_DONE;
+
+    watch_buzzer_play_note(BUZZER_NOTE_F3SHARP_G3FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_C4SHARP_D4FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_F4SHARP_G4FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_C4SHARP_D4FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_F4SHARP_G4FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_A4SHARP_B4FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_F3SHARP_G3FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_C4SHARP_D4FLAT, 40);
+    watch_buzzer_play_note(BUZZER_NOTE_C5SHARP_D5FLAT, 40);
+
     watch_clear_indicator(WATCH_INDICATOR_LAP);
     movement_request_tick_frequency(2);
     state->counter = 6 * 1;
