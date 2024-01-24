@@ -210,15 +210,15 @@ endif
 
 ifndef COLOR
 $(error Set the COLOR variable to RED, BLUE, or GREEN depending on what board you have.)
-endif
-
-ifeq ($(COLOR), BLUE)
+else ifeq ($(COLOR), BLUE)
 CFLAGS += -DWATCH_IS_BLUE_BOARD
-endif
-
-ifeq ($(COLOR), RED)
+else ifeq ($(COLOR), RED)
 CFLAGS += -DWATCH_INVERT_LED_POLARITY
 CFLAGS += -DNO_FREQCORR
+else ifeq ($(COLOR), GREEN)
+#noop
+else
+$(error Unrecognized board variant. Set the COLOR variable to RED, BLUE, or GREEN depending on what board you have.)
 endif
 
 ifdef FIRMWARE
