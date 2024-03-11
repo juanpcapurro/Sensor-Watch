@@ -45,6 +45,25 @@ static const uint8_t _blink_idx2[ALARM_SETTING_STATES] = {3, 1, 5, 7, 8, 9};
 static const BuzzerNote _buzzer_notes[3] = {BUZZER_NOTE_B6, BUZZER_NOTE_C8, BUZZER_NOTE_A8};
 static const uint8_t _buzzer_segdata[3][2] = {{0, 3}, {1, 3}, {2, 2}};
 
+static const alarm_setting_t _default_alarms[ALARM_ALARMS] = {
+    {.day=7, .hour= 0,  .minute= 30, .beeps= 5, .pitch= 1, .enabled= 1 },
+    {.day=9, .hour= 8,  .minute= 30, .beeps= 5, .pitch= 1, .enabled= 1 },
+    {.day=9, .hour= 11, .minute= 30, .beeps= 3, .pitch= 1, .enabled= 1 },
+    {.day=9, .hour= 11, .minute= 45, .beeps= 2, .pitch= 1, .enabled= 1 },
+    {.day=9, .hour= 12, .minute= 0,  .beeps= 2, .pitch= 1, .enabled= 1 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+};
+
 static int8_t _wait_ticks;
 
 static uint8_t _get_weekday_idx(watch_date_time date_time) {
@@ -206,9 +225,7 @@ void alarm_face_setup(movement_settings_t *settings, uint8_t watch_face_index, v
         memset(*context_ptr, 0, sizeof(alarm_state_t));
         // initialize the default alarm values
         for (uint8_t i = 0; i < ALARM_ALARMS; i++) {
-            state->alarm[i].day = ALARM_DAY_EACH_DAY;
-            state->alarm[i].beeps = 5;
-            state->alarm[i].pitch = 1;
+            state->alarm[i] = _default_alarms[i];
         }
         state->alarm_handled_minute = -1;
         _wait_ticks = -1;
@@ -404,21 +421,14 @@ bool alarm_face_loop(movement_event_t event, movement_settings_t *settings, void
             movement_play_alarm_beeps((state->alarm[state->alarm_playing_idx].beeps == (ALARM_MAX_BEEP_ROUNDS - 1) ? 20 : state->alarm[state->alarm_playing_idx].beeps), 
                                   _buzzer_notes[state->alarm[state->alarm_playing_idx].pitch]);
         }
-        // one time alarm? -> erase it
+        // one time alarm? -> disable it
         if (state->alarm[state->alarm_playing_idx].day == ALARM_DAY_ONE_TIME) {
-            state->alarm[state->alarm_playing_idx].day = ALARM_DAY_EACH_DAY;
-            state->alarm[state->alarm_playing_idx].minute = state->alarm[state->alarm_playing_idx].hour = 0;
-            state->alarm[state->alarm_playing_idx].beeps = 5;
-            state->alarm[state->alarm_playing_idx].pitch = 1;
             state->alarm[state->alarm_playing_idx].enabled = false;
             _alarm_update_alarm_enabled(settings, state);
         }
         break;
     case EVENT_TIMEOUT:
         movement_move_to_face(0);
-        break;
-    case EVENT_LIGHT_BUTTON_DOWN:
-        // don't light up every time light is hit
         break;
     default:
         movement_default_loop_handler(event, settings);

@@ -28,7 +28,12 @@
 #include "watch.h"
 #include "watch_utility.h"
 
-static const uint32_t _default_timer_values[] = {0x000200, 0x000500, 0x000A00, 0x001400, 0x002D02}; // default timers: 2 min, 5 min, 10 min, 20 min, 2 h 45 min
+static const uint32_t _default_timer_values[] = {
+    0x000500,
+    0xFF280000,
+    0x000A00,
+    0x001400,
+}; // default timers: 5 min, 45s loop, 10 min, 20 min
 
 // sound sequence for a single beeping sequence
 static const int8_t _sound_seq_beep[] = {BUZZER_NOTE_C8, 3, BUZZER_NOTE_REST, 3, -2, 2, BUZZER_NOTE_C8, 5, BUZZER_NOTE_REST, 25, 0};
@@ -242,7 +247,6 @@ bool timer_face_loop(movement_event_t event, movement_settings_t *settings, void
             switch (state->mode) {
                 case pausing:
                 case running:
-                    movement_illuminate_led();
                     break;
                 case setting:
                     if (state->erase_timer_flag) {
@@ -259,7 +263,7 @@ bool timer_face_loop(movement_event_t event, movement_settings_t *settings, void
             _draw(state, event.subsecond);
             break;
         case EVENT_LIGHT_BUTTON_UP:
-            if (state->mode == waiting) movement_illuminate_led();
+            movement_illuminate_led();
             break;
         case EVENT_ALARM_BUTTON_UP:
             _abort_quick_cycle(state);

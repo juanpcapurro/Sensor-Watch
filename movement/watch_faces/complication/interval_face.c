@@ -60,7 +60,7 @@ typedef enum {
 //      4. full rounds (0 = no limit)
 //      5. cooldown seconds
 // Work time and break time: positive number = seconds, negative number = minutes
-static const int8_t _default_timers[6][5] = {{0, 40, 20, 0, 0},
+static const int8_t _default_timers[6][5] = {{0, 30, 8, 0, 0},
                                             {0, 45, 15, 0, 0},
                                             {10, 20, 10, 8, 10},
                                             {0, 35, 0, 0, 0},

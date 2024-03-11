@@ -48,15 +48,18 @@ static const uint16_t activity_min_length_sec = 60;
 // W e should never change order or redefine items, only add new items when needed.
 static const char activity_names[][7] = {
     " SOLH ",
-    " CODE ",
+    "CODEFn",
     " EHER ",
     " JoUrn",
     " CrAFt",
     "OtHEr ",
+    "SPEC  ",
+    "nnEEt ",
+    "CODEuu",
 };
 
 // Currently enabled activities. This makes picking on first subface easier: why show activities you personally never do.
-static const uint8_t enabled_activities[] = {0, 1, 2, 3, 4, 5};
+static const uint8_t enabled_activities[] = {6, 7, 8, 4, 1, 2, 3, 0, 5};
 
 // Number of currently enabled activities (size of enabled_activities).
 static const uint8_t num_enabled_activities = sizeof(enabled_activities) / sizeof(uint8_t);
@@ -460,7 +463,7 @@ static void _activity_finish_logging(activity_state_t *state) {
 }
 
 static void _activity_display_beep_choice(uint8_t value) {
-    char buf[7];
+    char buf[8];
     if (value) {
         sprintf(buf, "BEEP%02i", value);
     } else {
