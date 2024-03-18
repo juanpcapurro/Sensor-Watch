@@ -47,11 +47,11 @@ static const uint16_t activity_min_length_sec = 60;
 // Supported activities. ID of activity is index in this buffer
 // W e should never change order or redefine items, only add new items when needed.
 static const char activity_names[][7] = {
-    " SOLH ",
+    "rEAD  ",
     "CODEFn",
     " EHER ",
     " JoUrn",
-    " CrAFt",
+    "dOCS  ",
     "OtHEr ",
     "SPEC  ",
     "nnEEt ",

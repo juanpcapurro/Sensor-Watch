@@ -46,11 +46,11 @@ static const BuzzerNote _buzzer_notes[3] = {BUZZER_NOTE_B6, BUZZER_NOTE_C8, BUZZ
 static const uint8_t _buzzer_segdata[3][2] = {{0, 3}, {1, 3}, {2, 2}};
 
 static const alarm_setting_t _default_alarms[ALARM_ALARMS] = {
-    {.day=7, .hour= 0,  .minute= 30, .beeps= 5, .pitch= 1, .enabled= 1 },
-    {.day=9, .hour= 8,  .minute= 30, .beeps= 5, .pitch= 1, .enabled= 1 },
-    {.day=9, .hour= 11, .minute= 30, .beeps= 3, .pitch= 1, .enabled= 1 },
-    {.day=9, .hour= 11, .minute= 45, .beeps= 2, .pitch= 1, .enabled= 1 },
-    {.day=9, .hour= 12, .minute= 0,  .beeps= 2, .pitch= 1, .enabled= 1 },
+    {.day=9, .hour= 11, .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 1 },
+    {.day=9, .hour= 11, .minute= 45, .beeps= 5, .pitch= 1, .enabled= 1 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
+    {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
     {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
     {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
     {.day=8, .hour= 0,  .minute= 0,  .beeps= 5, .pitch= 1, .enabled= 0 },
