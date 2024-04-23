@@ -41,7 +41,6 @@ void simple_clock_face_setup(movement_settings_t *settings, uint8_t watch_face_i
     if (*context_ptr == NULL) {
         *context_ptr = malloc(sizeof(simple_clock_state_t));
         simple_clock_state_t *state = (simple_clock_state_t *)*context_ptr;
-        state->signal_enabled = false;
         state->watch_face_index = watch_face_index;
     }
 }
@@ -52,10 +51,6 @@ void simple_clock_face_activate(movement_settings_t *settings, void *context) {
     if (watch_tick_animation_is_running()) watch_stop_tick_animation();
 
     if (settings->bit.clock_mode_24h) watch_set_indicator(WATCH_INDICATOR_24H);
-
-    // handle chime indicator
-    if (state->signal_enabled) watch_set_indicator(WATCH_INDICATOR_BELL);
-    else watch_clear_indicator(WATCH_INDICATOR_BELL);
 
     // show alarm indicator if there is an active alarm
     _update_alarm_indicator(settings->bit.alarm_enabled, state);
@@ -128,11 +123,6 @@ bool simple_clock_face_loop(movement_event_t event, movement_settings_t *setting
             // handle alarm indicator
             if (state->alarm_enabled != settings->bit.alarm_enabled) _update_alarm_indicator(settings->bit.alarm_enabled, state);
             break;
-        case EVENT_ALARM_LONG_PRESS:
-            state->signal_enabled = !state->signal_enabled;
-            if (state->signal_enabled) watch_set_indicator(WATCH_INDICATOR_BELL);
-            else watch_clear_indicator(WATCH_INDICATOR_BELL);
-            break;
         case EVENT_BACKGROUND_TASK:
             // uncomment this line to snap back to the clock face when the hour signal sounds:
             // movement_move_to_face(state->watch_face_index);
@@ -152,14 +142,4 @@ bool simple_clock_face_loop(movement_event_t event, movement_settings_t *setting
 void simple_clock_face_resign(movement_settings_t *settings, void *context) {
     (void) settings;
     (void) context;
-}
-
-bool simple_clock_face_wants_background_task(movement_settings_t *settings, void *context) {
-    (void) settings;
-    simple_clock_state_t *state = (simple_clock_state_t *)context;
-    if (!state->signal_enabled) return false;
-
-    watch_date_time date_time = watch_rtc_get_date_time();
-
-    return date_time.unit.minute == 0;
 }
